@@ -1,5 +1,36 @@
 <div class="nav-body">
     <ul>
+        <li class="nav-container report">
+            <a href="#" class="nav-content collapsed" data-bs-target="#back-office-dropdown" data-bs-toggle="collapse" aria-expanded="false">
+                <div>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-layout-dashboard"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
+                </div>
+                <span class="ps-3">Report</span>
+            </a>
+            <ul id="back-office-dropdown" class="px-3 nav-dropdown list-unstyled collapse">
+                <li>
+                    <a href="{{route('admin#reportSummary')}}" class="nav-link">Summary</a>
+                </li>
+                <li>
+                    <a href="#" class="nav-link">Product</a>
+                </li>
+                <li>
+                    <a href="#" class="nav-link">Category</a>
+                </li>
+                <li>
+                    <a href="#" class="nav-link">Seller</a>
+                </li>
+                <li>
+                    <a href="#" class="nav-link">Customer</a>
+                </li>
+                <li>
+                    <a href="#" class="nav-link">Purchase</a>
+                </li>
+                <li>
+                    <a href="#" class="nav-link">Inventory</a>
+                </li>
+            </ul>
+        </li>
         <li class="nav-container adminList">
             <a href="{{route('admin#list')}}" class="nav-content">
                 <div>

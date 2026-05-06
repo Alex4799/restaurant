@@ -14,6 +14,7 @@ use App\Http\Controllers\PromotionController;
 use App\Http\Controllers\PurchaseController;
 use App\Http\Controllers\PurchaseItemController;
 use App\Http\Controllers\ReduceController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SellController;
 use App\Http\Controllers\ShopController;
 use App\Http\Controllers\StoreController;
@@ -31,6 +32,10 @@ Route::prefix('admin')->group(function () {
     Route::post('create',[AdminController::class,'create'])->name('admin#create');
     Route::put('update',[AdminController::class,'update'])->name('admin#update');
     Route::delete('delete',[AdminController::class,'delete'])->name('admin#delete')->middleware('verifyAdmin');
+
+    Route::prefix('report')->group(function () {
+        Route::get('summary',[ReportController::class,'summary'])->name('admin#reportSummary');
+    });
 
     Route::prefix('profile')->group(function () {
         Route::get('/',[AuthController::class,'profile'])->name('admin#profile');
