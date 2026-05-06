@@ -51,12 +51,12 @@ class KitchenController extends Controller
             $order=Order::find($orderItem->order_id);
             $orderItemData=$orderItem->toArray();
             $orderItemData['table']=$order->table;
-            event(new WaiterAlertEvent($orderItem,$order->shop_id));
+            event(new WaiterAlertEvent($orderItemData,$order->shop_id));
         }else if($order->status==2){
             $order=Order::find($orderItem->order_id);
             $orderItemData=$orderItem->toArray();
             $orderItemData['table']=$order->table;
-            event(new WaiterAlertEvent($orderItem,$order->shop_id));
+            event(new WaiterAlertEvent($orderItemData,$order->shop_id));
         }
         return back()->with(['success'=>'Change status successfully.']);
     }

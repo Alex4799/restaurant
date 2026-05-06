@@ -163,33 +163,49 @@
     var pusher = new Pusher('6f1ebfd4aa55bf62ed9a', {
         cluster: 'ap1'
     });
-    var channel = pusher.subscribe('kitchen-alert-channel');
-    channel.bind('kitchen-alert-event', function(data) {
-        console.log(data);
-        if (data.shop_id==shopId) {
-            let order=data.order;
-            temp=`
-                <tr class="${order.status==0? 'pending' : ''}">
-                    <td>${order.id}</td>
-                    <td>OID - ${order.order_id}</td>
-                    <td>${order.product_name}</td>
-                    <td>${order.qty}</td>
-                    <td>${order.table}</td>
-                    <td>${order.note??''}</td>
-                    <td>${renderButton(order.status,order.id)}</td>
-                </tr>
-            `;
-            addNewRow(temp);
-            showAlert(order);
-        }
-    });
 
-    function addNewRow(rowHtml) {
+    position=`{{Auth::user()->position}}`;
+
+    if (position=='waiter') {
+        var channel = pusher.subscribe('waiter-alert-channel');
+        channel.bind('waiter-alert-event', function(data) {
+            console.log(data);
+            console.log(shopId);
+            if (data.shop_id==shopId) {
+                let order=data.order;
+                addNewRow(order);
+                showAlert(order);
+            }
+        });
+    }else if(position=='kitchen'){
+        var channel = pusher.subscribe('kitchen-alert-channel');
+        channel.bind('kitchen-alert-event', function(data) {
+            console.log(data);
+            if (data.shop_id==shopId) {
+                let order=data.order;
+                addNewRow(order);
+                showAlert(order);
+            }
+    });
+    }
+
+    function addNewRow(order) {
+        temp=`
+            <tr class="${order.status==0? 'pending' : ''}">
+                <td>${order.id}</td>
+                <td>OID - ${order.order_id}</td>
+                <td>${order.product_name}</td>
+                <td>${order.qty}</td>
+                <td>${order.table}</td>
+                <td>${order.note??''}</td>
+                <td>${renderButton(order.status,order.id)}</td>
+            </tr>
+        `;
         let lastPending = $('#table-list2 tbody tr.pending').last();
         if (lastPending.length > 0) {
-            lastPending.after(rowHtml); // insert after last pending
+            lastPending.after(temp); // insert after last pending
         } else {
-            $('#table-list2 tbody').append(rowHtml); // no pending → normal append
+            $('#table-list2 tbody').append(temp); // no pending → normal append
         }
     }
 

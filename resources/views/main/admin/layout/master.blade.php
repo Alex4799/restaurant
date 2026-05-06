@@ -307,6 +307,7 @@
         getWaiterData();
 
         let shopId={{Auth::user()->shop}};
+        let position=`{{Auth::user()->position}}`;
 
         Pusher.logToConsole = false;
 
@@ -314,21 +315,21 @@
           cluster: 'ap1'
         });
 
-        var kitchen_channel = pusher.subscribe('kitchen-alert-channel');
-        kitchen_channel.bind('kitchen-alert-event', function(data) {
-            if (data.shop_id==shopId) {
-                getKitchenData();
-            }
-        });
-
-        var waiter_channel = pusher.subscribe('waiter-alert-channel');
-        waiter_channel.bind('waiter-alert-event', function(data) {
-            console.log(data);
-
-            if (data.shop_id==shopId) {
-                getWaiterData();
-            }
-        });
+        if (position=='kitchen') {
+            var kitchen_channel = pusher.subscribe('kitchen-alert-channel');
+            kitchen_channel.bind('kitchen-alert-event', function(data) {
+                if (data.shop_id==shopId) {
+                    getKitchenData();
+                }
+            });
+        }else if(position=='waiter'){
+            var waiter_channel = pusher.subscribe('waiter-alert-channel');
+            waiter_channel.bind('waiter-alert-event', function(data) {
+                if (data.shop_id==shopId) {
+                    getWaiterData();
+                }
+            });
+        }
     </script>
 
     {{-- <script>
