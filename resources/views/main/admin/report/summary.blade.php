@@ -86,220 +86,164 @@
                         <div class="d-flex align-items-center justify-content-between overflow-x-auto">
                             <div class="sale-type-content">
                                 <a href="" class="sale-tag" data-target="gross-sales">
-                                    <label for="">Gross Sales (Ks)</label>
-                                    <h6>50,000,000</h6>
-                                    <div class="sale-plus">
+                                    <label for="">Gross Sales ({{request('currency')??'MMK'}})</label>
+                                    <h6>{{$saleData['grossSale']}}</h6>
+                                    <!-- <div class="sale-plus">
                                         <span>250,000</span>
                                         <span>( +100% )</span>
-                                    </div>
+                                    </div> -->
                                 </a>
                             </div>
                             <div class="sale-type-content">
                                 <a href="" class="sale-tag" data-target="refunds">
-                                    <label for="">Refunds (Ks)</label>
-                                    <h6>20,000</h6>
-                                    <div class="sale-minus">
+                                    <label for="">Refunds ({{request('currency')??'MMK'}})</label>
+                                    <h6>{{$saleData['refund']}}</h6>
+                                    <!-- <div class="sale-minus">
                                         <span>20,000</span>
                                         <span>( +100% )</span>
-                                    </div>
+                                    </div> -->
                                 </a>
                             </div>
                             <div class="sale-type-content">
                                 <a href="" class="sale-tag" data-target="sale-discounts">
-                                    <label for="">Discounts (Ks)</label>
-                                    <h6>450,000</h6>
-                                    <div class="sale-plus">
+                                    <label for="">Discounts ({{request('currency')??'MMK'}})</label>
+                                    <h6>{{$saleData['discount']}}</h6>
+                                    <!-- <div class="sale-plus">
                                         <span>450,000</span>
                                         <span>( -80% )</span>
-                                    </div>
+                                    </div> -->
                                 </a>
                             </div>
                             <div class="sale-type-content">
                                 <a href="" class="sale-tag" data-target="net-sales">
-                                    <label for="">Net Sales (Ks)</label>
-                                    <h6>100,000</h6>
-                                    <div class="sale-plus">
+                                    <label for="">Net Sales ({{request('currency')??'MMK'}})</label>
+                                    <h6>{{$saleData['netSale']}}</h6>
+                                    <!-- <div class="sale-plus">
                                         <span>100,000</span>
                                         <span>( +100% )</span>
-                                    </div>
+                                    </div> -->
                                 </a>
                             </div>
                             <div class="sale-type-content">
                                 <a href="" class="sale-tag" data-target="gross-profit">
-                                    <label for="">Gross Profit (Ks)</label>
-                                    <h6>500,000</h6>
-                                    <div class="sale-plus">
+                                    <label for="">Profit ({{request('currency')??'MMK'}})</label>
+                                    <h6>{{$saleData['profit']}}</h6>
+                                    <!-- <div class="sale-plus">
                                         <span>500,000</span>
                                         <span>( +100% )</span>
-                                    </div>
+                                    </div> -->
                                 </a>
                             </div>
                         </div>
                         <hr>
+                        <div class="d-flex justify-content-end gap-1">
+                            <div>
+                                <select id="chartType" class=" form-control">
+                                    <option value="bar">Bar</option>
+                                    <option value="line">Line</option>
+                                </select>
+                            </div>
+                            <div class="dropdown ms-3">
+                                <button class="dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <span class="text-capitalize">{{request('groupBy')??'daily'}}</span>
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="{{route('admin#reportSummary',array_merge(request()->all(),['groupBy'=>'daily']))}}">Daily</a></li>
+                                    <li><a class="dropdown-item" href="{{route('admin#reportSummary',array_merge(request()->all(),['groupBy'=>'weekly']))}}">Weekly</a></li>
+                                    <li><a class="dropdown-item" href="{{route('admin#reportSummary',array_merge(request()->all(),['groupBy'=>'monthly']))}}">Monthly</a></li>
+                                    <li><a class="dropdown-item" href="{{route('admin#reportSummary',array_merge(request()->all(),['groupBy'=>'yearly']))}}">Yearly</a></li>
+                                </ul>
+                            </div>
+                        </div>
                         <div class="chart-area">
                             <div id="gross-sales">
                                 <div class="d-flex align-items-center justify-content-between">
                                     <h6>Gross Sales</h6>
-                                    <div class="dropdown ms-3">
-                                        <button class="dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                            Date
-                                        </button>
-                                        <ul class="dropdown-menu">
-                                            <li><a class="dropdown-item" href="#">Days</a></li>
-                                            <li><a class="dropdown-item" href="#">Weeks</a></li>
-                                            <li><a class="dropdown-item" href="#">Months</a></li>
-                                            <li><a class="dropdown-item" href="#">Quarters</a></li>
-                                            <li><a class="dropdown-item" href="#">Years</a></li>
-                                        </ul>
-                                    </div>
                                 </div>
                                 <div class="graph-area">
                                     <div>
-                                        <canvas id="myChart"></canvas>
+                                        <canvas id="grossSaleChart"></canvas>
                                     </div>
                                 </div>
                             </div>
                             <div id="refunds">
                                 <div class="d-flex align-items-center justify-content-between">
                                     <h6>Refunds</h6>
-                                    <div class="dropdown ms-3">
-                                        <button class="dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                            Date
-                                        </button>
-                                        <ul class="dropdown-menu">
-                                            <li><a class="dropdown-item" href="#">Days</a></li>
-                                            <li><a class="dropdown-item" href="#">Weeks</a></li>
-                                            <li><a class="dropdown-item" href="#">Months</a></li>
-                                            <li><a class="dropdown-item" href="#">Quarters</a></li>
-                                            <li><a class="dropdown-item" href="#">Years</a></li>
-                                        </ul>
-                                    </div>
                                 </div>
                                 <div class="graph-area">
                                     <div>
-                                        <canvas id="lineChart"></canvas>
+                                        <canvas id="refundChart"></canvas>
                                     </div>
                                 </div>
                             </div>
                             <div id="sale-discounts">
                                 <div class="d-flex align-items-center justify-content-between">
                                     <h6>Discounts</h6>
-                                    <div class="dropdown ms-3">
-                                        <button class="dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                            Date
-                                        </button>
-                                        <ul class="dropdown-menu">
-                                            <li><a class="dropdown-item" href="#">Days</a></li>
-                                            <li><a class="dropdown-item" href="#">Weeks</a></li>
-                                            <li><a class="dropdown-item" href="#">Months</a></li>
-                                            <li><a class="dropdown-item" href="#">Quarters</a></li>
-                                            <li><a class="dropdown-item" href="#">Years</a></li>
-                                        </ul>
-                                    </div>
                                 </div>
                                 <div class="graph-area">
-                                    <!-- graph here  -->
+                                    <div>
+                                        <canvas id="discountChart"></canvas>
+                                    </div>
                                 </div>
                             </div>
                             <div id="net-sales">
                                 <div class="d-flex align-items-center justify-content-between">
                                     <h6>Net Sales</h6>
-                                    <div class="dropdown ms-3">
-                                        <button class="dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                            Date
-                                        </button>
-                                        <ul class="dropdown-menu">
-                                            <li><a class="dropdown-item" href="#">Days</a></li>
-                                            <li><a class="dropdown-item" href="#">Weeks</a></li>
-                                            <li><a class="dropdown-item" href="#">Months</a></li>
-                                            <li><a class="dropdown-item" href="#">Quarters</a></li>
-                                            <li><a class="dropdown-item" href="#">Years</a></li>
-                                        </ul>
-                                    </div>
                                 </div>
                                 <div class="graph-area">
-                                    <!-- graph here  -->
+                                    <div>
+                                        <canvas id="netSaleChart"></canvas>
+                                    </div>
                                 </div>
                             </div>
                             <div id="gross-profit">
                                 <div class="d-flex align-items-center justify-content-between">
                                     <h6>Gross Profit</h6>
-                                    <div class="dropdown ms-3">
-                                        <button class="dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                            Date
-                                        </button>
-                                        <ul class="dropdown-menu">
-                                            <li><a class="dropdown-item" href="#">Days</a></li>
-                                            <li><a class="dropdown-item" href="#">Weeks</a></li>
-                                            <li><a class="dropdown-item" href="#">Months</a></li>
-                                            <li><a class="dropdown-item" href="#">Quarters</a></li>
-                                            <li><a class="dropdown-item" href="#">Years</a></li>
-                                        </ul>
-                                    </div>
                                 </div>
                                 <div class="graph-area">
-                                    <!-- graph here  -->
+                                    <div>
+                                        <canvas id="profitChart"></canvas>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="table-excel-btn">
-                    <div>
-                        <a href="" title="Excel Download">
-                            <span><i class="fa-solid fa-file-excel me-2"></i>Excel</span>
-                        </a>
-                    </div>
-                </div>
                 <div>
-                    <table id="table-list2">
+                    <table id="salesTable">
                         <thead>
                             <tr>
                                 <th>Date</th>
-                                <th>Gross Sales(Ks)</th>
-                                <th>Refund(Ks)</th>
-                                <th>Discounts(Ks)</th>
-                                <th>Net Sales(Ks)</th>
-                                <th>Cost of goods(Ks)</th>
-                                <th>Gross Profit(Ks)</th>
-                                <th>Margin</th>
-                                <th>Taxes(Ks)</th>
+                                <th>Gross Sales({{request('currency')??'MMK'}})</th>
+                                <th>Refund({{request('currency')??'MMK'}})</th>
+                                <th>Discounts({{request('currency')??'MMK'}})</th>
+                                <th>Net Sales({{request('currency')??'MMK'}})</th>
+                                <th>Profit({{request('currency')??'MMK'}})</th>
+                                <th>Taxes({{request('currency')??'MMK'}})</th>
                             </tr>
                         </thead>
                         <tbody class="py-4">
-                            <tr class="text-end">
-                                <td>2025/02/02</td>
-                                <td>100,000</td>
-                                <td>100,000</td>
-                                <td>0</td>
-                                <td>100,000</td>
-                                <td>100,000</td>
-                                <td>100,000</td>
-                                <td>20 %</td>
-                                <td>100,000</td>
-                            </tr>
-                            <tr class="text-end">
-                                <td>2025/02/02</td>
-                                <td>300,000</td>
-                                <td>300,000</td>
-                                <td>0</td>
-                                <td>300,000</td>
-                                <td>300,000</td>
-                                <td>300,000</td>
-                                <td>60 %</td>
-                                <td>300,000</td>
-                            </tr>
-                            <tr class="text-end">
-                                <td>2025/02/01</td>
-                                <td>50,000</td>
-                                <td>50,000</td>
-                                <td>0</td>
-                                <td>50,000</td>
-                                <td>50,000</td>
-                                <td>50,000</td>
-                                <td>10 %</td>
-                                <td>50,000</td>
-                            </tr>
+                            @foreach($graphOrder as $item)
+                                <tr class="">
+                                    <td>
+                                        @if(request('groupBy')=='weekly')
+                                            {{$item->year}} - {{$item->week}}
+                                        @elseif(request('groupBy')=='monthly')
+                                            {{$item->year}} - {{$item->month}}
+                                        @elseif(request('groupBy')=='yearly')
+                                            {{$item->year}}
+                                        @else
+                                            {{$item->date}}
+                                        @endif
+                                    </td>
+                                    <td>{{$item->grossSale}}</td>
+                                    <td>{{$item->refund}}</td>
+                                    <td>{{$item->discount}}</td>
+                                    <td>{{$item->netSale}}</td>
+                                    <td>{{$item->profit}}</td>
+                                    <td>{{$item->tax}}</td>
+                                </tr>
+                            @endforeach
                         </tbody>
                     </table>
                 </div>
@@ -309,11 +253,10 @@
 @section('script')
     <script type="text/javascript">
         $(function() {
-            var startDate = `{{$filterData['startDate']}}`;
-            var endDate = `{{$filterData['endDate']}}`;
+            var startDate = `{{$filterData['startDate']->format('Y-m-d')}}`;
+            var endDate = `{{$filterData['endDate']->format('Y-m-d')}}`;
             var start = startDate ? moment(new Date(startDate).toISOString()) : moment().startOf('month');
             var end = endDate ? moment(new Date(endDate).toISOString()) : moment().endOf('month').endOf('day');
-
 
             function cb(start, end) {
                 $('#reportrange span').html(start.format('MMM D, YYYY') + ' - ' + end.format('MMM D, YYYY'));
@@ -344,12 +287,12 @@
         });
     </script>
     <script>
-        const chartConfig = (type, labels, data, barPercentage = 0.5) => ({
+        const chartConfig = (type, title, labels, data, barPercentage = 0.5) => ({
             type,
             data: {
                 labels,
                 datasets: [{
-                    label: type === "bar" ? "Sales" : "Refunds",
+                    label: title,
                     data,
                     backgroundColor: "rgba(26, 164, 58, 0.668)",
                     borderColor: "rgb(42, 145, 42)",
@@ -365,12 +308,41 @@
                 }
             }
         });
+        let chartType=localStorage.getItem('chartType')??'bar';
+        const charts={};
+        const graphData=@json($graphData);
+        console.log(graphData);
+        console.log(graphData.date);
+        
 
-        const ctx = document.getElementById('myChart');
-        const ctxLine = document.getElementById("lineChart");
+        renderChart('grossSaleChart','Gross Sale',graphData['date'],graphData['grossSale']);
+        renderChart('refundChart','Refund',graphData['date'],graphData['refund']);
+        renderChart('discountChart','Discount',graphData['date'],graphData['discount']);
+        renderChart('netSaleChart','Net Sale',graphData['date'],graphData['netSale']);
+        renderChart('profitChart','Profit',graphData['date'],graphData['profit']);
 
-        new Chart(ctx, chartConfig("bar", ['A', 'B', 'C', 'D', 'E'], [12, 19, 3, 5, 10]));
-        new Chart(ctxLine, chartConfig("line", ["Jan", "Feb", "Mar", "Apr", "May"], [10, 25, 15, 30, 19]));
+        function renderChart(id,title,date,price){
+            const chartContainer=document.getElementById(id);
+            charts[id]=new Chart(chartContainer, chartConfig(chartType,title, date, price));
+        }
+
+        function updateChartType(){
+            for (const id in charts) {
+                charts[id].config.type=chartType;
+                charts[id].update();
+                console.log(charts[id].config.type);
+                
+            }
+        }
+
+        $('#chartType').change(function(){
+            chartType=$(this).val();
+            localStorage.setItem('chartType',chartType);
+            updateChartType();
+        })
+
+        $('#chartType').val(chartType);
+        
     </script>
     <script>
         $(document).ready(function() {
