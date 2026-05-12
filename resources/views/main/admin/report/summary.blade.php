@@ -311,9 +311,7 @@
         let chartType=localStorage.getItem('chartType')??'bar';
         const charts={};
         const graphData=@json($graphData);
-        console.log(graphData);
-        console.log(graphData.date);
-        
+
 
         renderChart('grossSaleChart','Gross Sale',graphData['date'],graphData['grossSale']);
         renderChart('refundChart','Refund',graphData['date'],graphData['refund']);
@@ -330,8 +328,6 @@
             for (const id in charts) {
                 charts[id].config.type=chartType;
                 charts[id].update();
-                console.log(charts[id].config.type);
-                
             }
         }
 
@@ -342,7 +338,7 @@
         })
 
         $('#chartType').val(chartType);
-        
+
     </script>
     <script>
         $(document).ready(function() {

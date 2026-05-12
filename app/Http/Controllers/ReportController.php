@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Currency;
 use App\Models\Order;
+use App\Models\OrderItem;
 use App\Models\Shop;
 use App\Models\User;
 use Carbon\Carbon;
@@ -20,9 +21,9 @@ public function summary(){
         $groupBy=request('groupBy')??'daily';
 
         $shop=Shop::where('active',1)->get();
-        
+
         $currencies=Currency::get();
-        
+
         $seller=User::where('position','seller')->get();
 
         $filterData=[
@@ -32,6 +33,8 @@ public function summary(){
             'currencies'=>$currencies,
             'seller'=>$seller,
         ];
+
+    //baseQuery
 
         $order=Order::whereBetween('created_at',[$startDate,$endDate])
                     ->when(request('shopFilter'),function($query){
@@ -71,16 +74,16 @@ public function summary(){
         $graphOrder=(clone $order)
                     ->selectRaw("
                         $selectQuery,
-                        SUM(CASE WHEN status= 1 THEN total_price ELSE 0 END) as grossSale, 
-                        SUM(CASE WHEN status= 2 THEN total_price ELSE 0 END) as refund, 
-                        SUM(CASE WHEN status= 1 THEN COALESCE(promotion_price,0) ELSE 0 END) as discount, 
-                        SUM(CASE WHEN status= 1 THEN COALESCE(tax_price,0) ELSE 0 END) as tax, 
+                        SUM(CASE WHEN status= 1 THEN total_price ELSE 0 END) as grossSale,
+                        SUM(CASE WHEN status= 2 THEN total_price ELSE 0 END) as refund,
+                        SUM(CASE WHEN status= 1 THEN COALESCE(promotion_price,0) ELSE 0 END) as discount,
+                        SUM(CASE WHEN status= 1 THEN COALESCE(tax_price,0) ELSE 0 END) as tax,
                         SUM(CASE WHEN status= 1 THEN total_price - COALESCE(promotion_price,0) ELSE 0 END) as netSale,
                         SUM(CASE WHEN status= 1 THEN profit ELSE 0 END) as profit
                     ")
                     ->groupBy($groupByQuery)
                     ->get();
-        
+
         $graphData=[
             'date'=>[],
             'grossSale'=>[],
@@ -89,7 +92,7 @@ public function summary(){
             'netSale'=>[],
             'refund'=>[],
         ];
-        
+
         foreach ($graphOrder as $item) {
             array_push($graphData['grossSale'],$item->grossSale);
             array_push($graphData['refund'],$item->refund);
@@ -107,4 +110,64 @@ public function summary(){
 
         return view('main.admin.report.summary',compact('filterData','saleData','graphData','graphOrder'));
 }
+
+public function product(){
+    // filter data
+        $startDate = request('startDate')?Carbon::parse(request('startDate'))->startOfDay():Carbon::now('Asia/Yangon')->subDays(29)->startOfDay();
+        $endDate = request('endDate')?Carbon::parse(request('endDate'))->endOfDay():Carbon::now('Asia/Yangon')->format('Y-m-d')->endOfDay();
+        $currency=request('currency')??'MMK';
+        $groupBy=request('groupBy')??'daily';
+
+        $shop=Shop::where('active',1)->get();
+
+        $currencies=Currency::get();
+
+        $seller=User::where('position','seller')->get();
+
+        $filterData=[
+            'startDate'=>$startDate,
+            'endDate'=>$endDate,
+            'shop'=>$shop,
+            'currencies'=>$currencies,
+            'seller'=>$seller,
+        ];
+
+    // variable
+
+        $selectQuery=match ($groupBy) {
+            'weekly'=>"WEEK(created_at) as week,YEAR(created_at) as year",
+            'monthly'=>"MONTH(created_at) as month,YEAR(created_at) as year",
+            'yearly'=>"YEAR(created_at) as year",
+            default=>"DATE(created_at) as date",
+        };
+
+    // base query
+
+        $orderItem=OrderItem::whereBetween('order_items.created_at',[$startDate,$endDate])
+                            ->leftJoin('orders','order_items.order_id','orders.id')
+                            ->where('order_items.currency',$currency)
+                            ->when(request('shopFilter'),function($query){
+                                $query->where('orders.shop_name',request('shopFilter'));
+                            })->where(request('seller'),function($query){
+                                $query->where('orders.seller_name',request('seller'));
+                            });
+
+    // each order item filter
+        $products=(clone $orderItem)
+                        ->select('order_items.*')
+                        ->groupBy('product_name')
+                        ->get();
+
+        if (isset($products)) {
+            $productName=$products[0]->product_name;
+        }
+        $productsFilter=(clone $orderItem)
+                        ->where('product_name',$productName)
+                        ->select()
+                        ->get();
+
+        return view('main.admin.report.product',compact('filterData'));
+
+}
+
 }

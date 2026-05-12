@@ -35,6 +35,7 @@ Route::prefix('admin')->group(function () {
 
     Route::prefix('report')->group(function () {
         Route::get('summary',[ReportController::class,'summary'])->name('admin#reportSummary');
+        Route::get('product',[ReportController::class,'product'])->name('admin#reportProduct');
     });
 
     Route::prefix('profile')->group(function () {

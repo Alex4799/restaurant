@@ -12,7 +12,7 @@
                     <a href="{{route('admin#reportSummary')}}" class="nav-link">Summary</a>
                 </li>
                 <li>
-                    <a href="#" class="nav-link">Product</a>
+                    <a href="{{route('admin#reportProduct')}}" class="nav-link">Product</a>
                 </li>
                 <li>
                     <a href="#" class="nav-link">Category</a>
