@@ -16,7 +16,7 @@ class ReportController extends Controller
 public function summary(){
     // filter data
         $startDate = request('startDate')?Carbon::parse(request('startDate'))->startOfDay():Carbon::now('Asia/Yangon')->subDays(29)->startOfDay();
-        $endDate = request('endDate')?Carbon::parse(request('endDate'))->endOfDay():Carbon::now('Asia/Yangon')->format('Y-m-d')->endOfDay();
+        $endDate = request('endDate')?Carbon::parse(request('endDate'))->endOfDay():Carbon::now('Asia/Yangon')->endOfDay();
         $currency=request('currency')??'MMK';
         $groupBy=request('groupBy')??'daily';
 
@@ -114,7 +114,7 @@ public function summary(){
 public function product(){
     // filter data
         $startDate = request('startDate')?Carbon::parse(request('startDate'))->startOfDay():Carbon::now('Asia/Yangon')->subDays(29)->startOfDay();
-        $endDate = request('endDate')?Carbon::parse(request('endDate'))->endOfDay():Carbon::now('Asia/Yangon')->format('Y-m-d')->endOfDay();
+        $endDate = request('endDate')?Carbon::parse(request('endDate'))->endOfDay():Carbon::now('Asia/Yangon')->endOfDay();
         $currency=request('currency')??'MMK';
         $groupBy=request('groupBy')??'daily';
 
@@ -135,38 +135,67 @@ public function product(){
     // variable
 
         $selectQuery=match ($groupBy) {
-            'weekly'=>"WEEK(created_at) as week,YEAR(created_at) as year",
-            'monthly'=>"MONTH(created_at) as month,YEAR(created_at) as year",
-            'yearly'=>"YEAR(created_at) as year",
-            default=>"DATE(created_at) as date",
+            'weekly'=>"WEEK(order_items.created_at) as week,YEAR(order_items.created_at) as year",
+            'monthly'=>"MONTH(order_items.created_at) as month,YEAR(order_items.created_at) as year",
+            'yearly'=>"YEAR(order_items.created_at) as year",
+            default=>"DATE(order_items.created_at) as date",
+        };
+
+        $groupByQuery=match ($groupBy) {
+                    'weekly'=>['week','year'],
+                    'monthly'=>['month','year'],
+                    'yearly'=>'year',
+                    default=>'date' ,
         };
 
     // base query
 
-        $orderItem=OrderItem::whereBetween('order_items.created_at',[$startDate,$endDate])
-                            ->leftJoin('orders','order_items.order_id','orders.id')
+        $orderItem=OrderItem::leftJoin('orders','order_items.order_id','orders.id')
+                            ->whereBetween('order_items.created_at',[$startDate,$endDate])
                             ->where('order_items.currency',$currency)
                             ->when(request('shopFilter'),function($query){
                                 $query->where('orders.shop_name',request('shopFilter'));
-                            })->where(request('seller'),function($query){
+                            })->when(request('seller'),function($query){
                                 $query->where('orders.seller_name',request('seller'));
                             });
 
     // each order item filter
         $products=(clone $orderItem)
-                        ->select('order_items.*')
+                        ->selectRaw('SUM(order_items.qty) as total_qty,
+                        SUM(order_items.price*order_items.qty) as total_price,
+                        product_name,SUM(order_items.profit) as total_profit')
                         ->groupBy('product_name')
                         ->get();
 
-        if (isset($products)) {
-            $productName=$products[0]->product_name;
-        }
+        $productName=request('product')??$products->first()?->product_name??'';
         $productsFilter=(clone $orderItem)
                         ->where('product_name',$productName)
-                        ->select()
+                        ->selectRaw("$selectQuery,SUM(order_items.price*order_items.qty) as total_price,product_name")
+                        ->groupBy($groupByQuery)
                         ->get();
 
-        return view('main.admin.report.product',compact('filterData'));
+        $productsFilterGraph=[
+            'date'=>[],
+            'total_price'=>$productsFilter->pluck('total_price'),
+            'product_name'=>$productName
+        ];
+
+        foreach ($productsFilter as $item) {
+            $date=match ($groupBy) {
+                'weekly'=>"$item->year - $item->week",
+                'monthly'=>"$item->year - $item->month",
+                'yearly'=>"$item->year",
+                default=>"$item->date" ,
+            };
+            array_push($productsFilterGraph['date'],$date);
+        }
+    // all products report
+        $productsGraph=[
+            'product'=>$products->pluck('product_name'),
+            'total_price'=>$products->pluck('total_price'),
+        ];
+
+        return view('main.admin.report.product',compact('filterData','products','productsFilterGraph','productsGraph'));
 
 }
 

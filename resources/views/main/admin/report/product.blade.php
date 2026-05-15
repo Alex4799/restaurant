@@ -133,7 +133,7 @@
                                             <th>#</th>
                                             <th>Product</th>
                                             <th>Total QTY</th>
-                                            <th>Total Price ({{$currency}})</th>
+                                            <th>Total Price ({{request('currency')??"MMK"}})</th>
                                             <th></th>
                                         </tr>
                                     </thead>
@@ -180,8 +180,8 @@
                     <tr class="text-end">
                         <th>Product Name</th>
                         <th>QTY</th>
-                        <th>Total Price({{$currency}})</th>
-                        <th>Profit({{$currency}})</th>
+                        <th>Total Price({{request('currency')??'MMK'}})</th>
+                        <th>Profit({{request('currency')??'MMK'}})</th>
                     </tr>
                 </thead>
                 <tbody class="py-4">
@@ -274,14 +274,14 @@
     }
 
     function initializeCharts() {
-        $product=@json($productData);
-        $productsGraph=@json($productGraph);
+        $product=@json($productsFilterGraph);
+        $productsGraph=@json($productsGraph);
 
         const ctx = document.getElementById('productGraph').getContext('2d');
-        charts['productGraph'] = new Chart(ctx, chartConfig(chartType, $product.date, $product.total_price, $product.product));
+        charts['productGraph'] = new Chart(ctx, chartConfig(chartType, $product.date, $product.total_price, $product.product_name));
 
         const products=document.getElementById('productsGraph').getContext('2d');
-        charts['productsGraph'] = new Chart(products, chartConfig(chartType, $productsGraph.name, $productsGraph.price, $product.product));
+        charts['productsGraph'] = new Chart(products, chartConfig(chartType, $productsGraph.product, $productsGraph.total_price, 'Product'));
 
     }
 
