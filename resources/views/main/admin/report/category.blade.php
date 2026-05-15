@@ -20,7 +20,7 @@
                 <div class="d-flex align-items-center me-2 sale-shop-filter">
                     <select name="shopFilter" class="form-control">
                         <option value="">Filter By Shop</option>
-                        @foreach ($shop as $item)
+                        @foreach ($filterData['shop'] as $item)
                             <option value="{{$item->name}}" @if ($item->name==request('shopFilter')) selected @endif>{{$item->name}}</option>
                         @endforeach
                     </select>
@@ -28,11 +28,11 @@
                 </div>
                 <div class="dropdown dropdown-menu-end">
                     <button class="dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        Currency - {{$currency}}
+                        Currency - {{request('currency')??'MMK'}}
                     </button>
                     <ul class="dropdown-menu">
-                        @foreach ($currencies as $item)
-                            <li><a class="dropdown-item" href="{{route('admin#categoryReport',array_merge(request()->all(),['currency'=>$item->currency_code]))}}">{{$item->currency_code}}</a></li>
+                        @foreach ($filterData['currencies'] as $item)
+                            <li><a class="dropdown-item" href="{{route('admin#reportCategory',array_merge(request()->all(),['currency'=>$item->currency_code]))}}">{{$item->currency_code}}</a></li>
                         @endforeach
                     </ul>
                 </div>
@@ -47,11 +47,11 @@
                 </div>
                 <div class="d-flex align-items-center">
                     <div class="dropdown">
-                        <button class="dropdown-toggle time-toggle" type="button" data-bs-toggle="dropdown" data-bs-auto-close="inside" aria-expanded="false">
+                        <button class="dropdown-toggle" type="button" data-bs-toggle="dropdown" data-bs-auto-close="inside" aria-expanded="false">
                             Time
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item" href="{{route('admin#categoryReport',['startDate'=>request('startDate'),'endDate'=>request('endDate'),'shopFilter'=>request('shopFilter')])}}">All</a></li>
+                            <li><a class="dropdown-item" href="{{route('admin#reportCategory',['startDate'=>request('startDate'),'endDate'=>request('endDate'),'shopFilter'=>request('shopFilter')])}}">All</a></li>
                             <li>
                                 <a class="dropdown-item custom-btn d-flex align-items-center justify-content-between" href="javascript:void(0);">
                                     Custom
@@ -75,10 +75,10 @@
                     </div>
                     <div class="dropdown">
                         <div class="d-flex align-items-center sale-user-filter">
-                            <select name="user" class="form-control" id="">
+                            <select name="seller" class="form-control" id="">
                                 <option value="">All</option>
-                                @foreach ($user as $item)
-                                    <option value="{{$item->name}}" @if ($item->name==request('user')) selected @endif>{{$item->name}}</option>
+                                @foreach ($filterData['seller'] as $item)
+                                    <option value="{{$item->name}}" @if ($item->name==request('seller')) selected @endif>{{$item->name}}</option>
                                 @endforeach
                             </select>
                             <i class="fa fa-sort-down mb-1" id="method-drop-icon2"></i>
@@ -88,7 +88,7 @@
             </div>
             <div class="d-flex align-items-center justify-content-end gap-1 mb-2">
                 <button type="submit" class="btn btn-primary">Apply</button>
-                <a href="{{route('admin#categoryReport')}}" class="btn btn-danger">Clear</a>
+                <a href="{{route('admin#reportCategory')}}" class="btn btn-danger">Clear</a>
             </div>
         </form>
          <div class="sale-type-btn">
@@ -106,17 +106,13 @@
                     <div>
                         <div class="dropdown ms-2">
                             <button class="dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                @if (request('groupBy')!=null)
-                                    {{request('groupBy')}}
-                                @else
-                                    Daily
-                                @endif
+                                <span class=" text-capitalize">{{request('groupBy')??'daily'}}</span>
                             </button>
                             <ul class="dropdown-menu">
-                                <li><a class="dropdown-item" href="{{route('admin#categoryReport',array_merge(request()->all(),['groupBy'=>'Daily']))}}">Daily</a></li>
-                                <li><a class="dropdown-item" href="{{route('admin#categoryReport',array_merge(request()->all(),['groupBy'=>'Weekly']))}}">Weekly</a></li>
-                                <li><a class="dropdown-item" href="{{route('admin#categoryReport',array_merge(request()->all(),['groupBy'=>'Monthly']))}}">Monthly</a></li>
-                                <li><a class="dropdown-item" href="{{route('admin#categoryReport',array_merge(request()->all(),['groupBy'=>'Yearly']))}}">Yearly</a></li>
+                                <li><a class="dropdown-item" href="{{route('admin#reportCategory',array_merge(request()->all(),['groupBy'=>'daily']))}}">Daily</a></li>
+                                <li><a class="dropdown-item" href="{{route('admin#reportCategory',array_merge(request()->all(),['groupBy'=>'weekly']))}}">Weekly</a></li>
+                                <li><a class="dropdown-item" href="{{route('admin#reportCategory',array_merge(request()->all(),['groupBy'=>'monthly']))}}">Monthly</a></li>
+                                <li><a class="dropdown-item" href="{{route('admin#reportCategory',array_merge(request()->all(),['groupBy'=>'yearly']))}}">Yearly</a></li>
                             </ul>
                         </div>
                     </div>
@@ -137,7 +133,7 @@
                                             <th>#</th>
                                             <th>Category</th>
                                             <th>Total QTY</th>
-                                            <th>Total Price ({{$currency}})</th>
+                                            <th>Total Price ({{request('currency')??'MMK'}})</th>
                                             <th></th>
                                         </tr>
                                     </thead>
@@ -149,7 +145,7 @@
                                                 <td>{{$item->total_qty}}</td>
                                                 <td>{{$item->total_price}}</td>
                                                 <td>
-                                                    <a href="{{route('admin#categoryReport',array_merge(request()->all(),['category'=>$item->category_name]))}}" class="text-bg-primary rounded p-2 pt-1" title="Report">
+                                                    <a href="{{route('admin#reportCategory',array_merge(request()->all(),['category'=>$item->category_name]))}}" class="text-bg-primary rounded p-2 pt-1" title="Report">
                                                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-clipboard-minus"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M9 14h6"/></svg>
                                                     </a>
                                                 </td>
@@ -171,7 +167,7 @@
                 <div class="py-2">
                     <div class="graph-area">
                         <div>
-                            <canvas id="ca$categoriesGraph"></canvas>
+                            <canvas id="categoriesGraph"></canvas>
                         </div>
                     </div>
                 </div>
@@ -183,8 +179,8 @@
                     <tr class="text-end">
                         <th>Caegory Name</th>
                         <th>QTY</th>
-                        <th>Total Price({{$currency}})</th>
-                        <th>Profit({{$currency}})</th>
+                        <th>Total Price({{request('currency')??'MMK'}})</th>
+                        <th>Profit({{request('currency')??'MMK'}})</th>
                     </tr>
                 </thead>
                 <tbody class="py-4">
@@ -277,14 +273,14 @@
     }
 
     function initializeCharts() {
-        $category=@json($categoryData);
-        $categoriesGraph=@json($categoryGraph);
+        $category=@json($categoriesFilterGraph);
+        $categoriesGraph=@json($categoriesGraph);
 
         const ctx = document.getElementById('categoryGraph').getContext('2d');
-        charts['categoryGraph'] = new Chart(ctx, chartConfig(chartType, $category.date, $category.total_price, $category.category));
+        charts['categoryGraph'] = new Chart(ctx, chartConfig(chartType, $category.date, $category.total_price, $category.category_name));
 
-        const products=document.getElementById('ca$categoriesGraph').getContext('2d');
-        charts['ca$categoriesGraph'] = new Chart(products, chartConfig(chartType, $categoriesGraph.name, $categoriesGraph.price, 'Categories'));
+        const products=document.getElementById('categoriesGraph').getContext('2d');
+        charts['ca$categoriesGraph'] = new Chart(products, chartConfig(chartType, $categoriesGraph.category, $categoriesGraph.total_price, 'Categories'));
 
     }
 

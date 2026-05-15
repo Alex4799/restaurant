@@ -15,7 +15,7 @@
                     <a href="{{route('admin#reportProduct')}}" class="nav-link">Product</a>
                 </li>
                 <li>
-                    <a href="#" class="nav-link">Category</a>
+                    <a href="{{route('admin#reportCategory')}}" class="nav-link">Category</a>
                 </li>
                 <li>
                     <a href="#" class="nav-link">Seller</a>

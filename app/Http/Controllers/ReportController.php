@@ -151,7 +151,7 @@ public function product(){
     // base query
 
         $orderItem=OrderItem::leftJoin('orders','order_items.order_id','orders.id')
-                            ->whereBetween('order_items.created_at',[$startDate,$endDate])
+                            // ->whereBetween('order_items.created_at',[$startDate,$endDate])
                             ->where('order_items.currency',$currency)
                             ->when(request('shopFilter'),function($query){
                                 $query->where('orders.shop_name',request('shopFilter'));
@@ -196,6 +196,93 @@ public function product(){
         ];
 
         return view('main.admin.report.product',compact('filterData','products','productsFilterGraph','productsGraph'));
+
+}
+
+public function category(){
+    // filter data
+        $startDate = request('startDate')?Carbon::parse(request('startDate'))->startOfDay():Carbon::now('Asia/Yangon')->subDays(29)->startOfDay();
+        $endDate = request('endDate')?Carbon::parse(request('endDate'))->endOfDay():Carbon::now('Asia/Yangon')->endOfDay();
+        $currency=request('currency')??'MMK';
+        $groupBy=request('groupBy')??'daily';
+
+        $shop=Shop::where('active',1)->get();
+
+        $currencies=Currency::get();
+
+        $seller=User::where('position','seller')->get();
+
+        $filterData=[
+            'startDate'=>$startDate,
+            'endDate'=>$endDate,
+            'shop'=>$shop,
+            'currencies'=>$currencies,
+            'seller'=>$seller,
+        ];
+
+    // variable
+
+        $selectQuery=match ($groupBy) {
+            'weekly'=>"WEEK(order_items.created_at) as week,YEAR(order_items.created_at) as year",
+            'monthly'=>"MONTH(order_items.created_at) as month,YEAR(order_items.created_at) as year",
+            'yearly'=>"YEAR(order_items.created_at) as year",
+            default=>"DATE(order_items.created_at) as date",
+        };
+
+        $groupByQuery=match ($groupBy) {
+                    'weekly'=>['week','year'],
+                    'monthly'=>['month','year'],
+                    'yearly'=>'year',
+                    default=>'date' ,
+        };
+
+    // base query
+
+        $orderItem=OrderItem::leftJoin('orders','order_items.order_id','orders.id')
+                            // ->whereBetween('order_items.created_at',[$startDate,$endDate])
+                            ->where('order_items.currency',$currency)
+                            ->when(request('shopFilter'),function($query){
+                                $query->where('orders.shop_name',request('shopFilter'));
+                            })->when(request('seller'),function($query){
+                                $query->where('orders.seller_name',request('seller'));
+                            });
+
+    // each order item filter
+        $categories=(clone $orderItem)
+                        ->selectRaw('SUM(order_items.qty) as total_qty,
+                        SUM(order_items.price*order_items.qty) as total_price,
+                        category_name,SUM(order_items.profit) as total_profit')
+                        ->groupBy('category_name')
+                        ->get();
+
+        $categoryName=request('category')??$categories->first()?->category_name??'';
+        $categoriesFilter=(clone $orderItem)
+                        ->where('category_name',$categoryName)
+                        ->selectRaw("$selectQuery,SUM(order_items.price*order_items.qty) as total_price,category_name")
+                        ->groupBy($groupByQuery)
+                        ->get();
+
+        $categoriesFilterGraph=[
+            'date'=>[],
+            'total_price'=>$categoriesFilter->pluck('total_price'),
+            'category_name'=>$categoryName
+        ];
+        foreach ($categoriesFilter as $item) {
+            $date=match ($groupBy) {
+                'weekly'=>"$item->year - $item->week",
+                'monthly'=>"$item->year - $item->month",
+                'yearly'=>"$item->year",
+                default=>"$item->date" ,
+            };
+            array_push($categoriesFilterGraph['date'],$date);
+        }
+    // all categories report
+        $categoriesGraph=[
+            'category'=>$categories->pluck('category_name'),
+            'total_price'=>$categories->pluck('total_price'),
+        ];
+
+        return view('main.admin.report.category',compact('filterData','categories','categoriesFilterGraph','categoriesGraph'));
 
 }
 
