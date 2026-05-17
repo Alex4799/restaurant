@@ -37,6 +37,7 @@ Route::prefix('admin')->group(function () {
         Route::get('summary',[ReportController::class,'summary'])->name('admin#reportSummary');
         Route::get('product',[ReportController::class,'product'])->name('admin#reportProduct');
         Route::get('category',[ReportController::class,'category'])->name('admin#reportCategory');
+        Route::get('seller',[ReportController::class,'seller'])->name('admin#reportSeller');
     });
 
     Route::prefix('profile')->group(function () {
