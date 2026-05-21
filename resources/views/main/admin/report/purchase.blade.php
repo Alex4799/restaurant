@@ -17,13 +17,22 @@
     <div class="table-content">
         <form action="" class="mt-3" method="get" id="sale-filter">
             <div class="d-flex align-items-center flex-wrap mb-2">
+                <div class="d-flex align-items-center me-2 sale-shop-filter">
+                    <select name="shopFilter" class="form-control">
+                        <option value="">Filter By Shop</option>
+                        @foreach ($filterData['shop'] as $item)
+                            <option value="{{$item->name}}" @if ($item->name==request('shopFilter')) selected @endif>{{$item->name}}</option>
+                        @endforeach
+                    </select>
+                    <i class="fa fa-sort-down mb-1" id="method-drop-icon2"></i>
+                </div>
                 <div class="dropdown dropdown-menu-end">
                     <button class="dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        Currency - {{$currency}}
+                        Currency - {{request('currency')??'MMK'}}
                     </button>
                     <ul class="dropdown-menu">
-                        @foreach ($currencies as $item)
-                            <li><a class="dropdown-item" href="{{route('admin#categoryReport',array_merge(request()->all(),['currency'=>$item->currency_code]))}}">{{$item->currency_code}}</a></li>
+                        @foreach ($filterData['currencies'] as $item)
+                            <li><a class="dropdown-item" href="{{route('admin#reportPurchase',array_merge(request()->all(),['currency'=>$item->currency_code]))}}">{{$item->currency_code}}</a></li>
                         @endforeach
                     </ul>
                 </div>
@@ -42,7 +51,7 @@
                             Time
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item" href="{{route('admin#purchaseReport',['startDate'=>request('startDate'),'endDate'=>request('endDate'),'shopFilter'=>request('shopFilter')])}}">All</a></li>
+                            <li><a class="dropdown-item" href="{{route('admin#reportPurchase',['startDate'=>request('startDate'),'endDate'=>request('endDate'),'shopFilter'=>request('shopFilter')])}}">All</a></li>
                             <li>
                                 <a class="dropdown-item custom-btn d-flex align-items-center justify-content-between" href="javascript:void(0);">
                                     Custom
@@ -68,7 +77,7 @@
             </div>
             <div class="d-flex align-items-center justify-content-end gap-1 mb-2">
                 <button type="submit" class="btn btn-primary">Apply</button>
-                <a href="{{route('admin#purchaseReport')}}" class="btn btn-danger">Clear</a>
+                <a href="{{route('admin#reportPurchase')}}" class="btn btn-danger">Clear</a>
             </div>
         </form>
          <div class="sale-type-btn">
@@ -87,16 +96,16 @@
                         <div class="dropdown ms-2">
                             <button class="dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                                 @if (request('groupBy')!=null)
-                                    {{request('groupBy')}}
+                                    <span class=" text-capitalize">{{request('groupBy')}}</span>
                                 @else
                                     Daily
                                 @endif
                             </button>
                             <ul class="dropdown-menu">
-                                <li><a class="dropdown-item" href="{{route('admin#purchaseReport',array_merge(request()->all(),['groupBy'=>'Daily']))}}">Daily</a></li>
-                                <li><a class="dropdown-item" href="{{route('admin#purchaseReport',array_merge(request()->all(),['groupBy'=>'Weekly']))}}">Weekly</a></li>
-                                <li><a class="dropdown-item" href="{{route('admin#purchaseReport',array_merge(request()->all(),['groupBy'=>'Monthly']))}}">Monthly</a></li>
-                                <li><a class="dropdown-item" href="{{route('admin#purchaseReport',array_merge(request()->all(),['groupBy'=>'Yearly']))}}">Yearly</a></li>
+                                <li><a class="dropdown-item" href="{{route('admin#reportPurchase',array_merge(request()->all(),['groupBy'=>'daily']))}}">Daily</a></li>
+                                <li><a class="dropdown-item" href="{{route('admin#reportPurchase',array_merge(request()->all(),['groupBy'=>'weekly']))}}">Weekly</a></li>
+                                <li><a class="dropdown-item" href="{{route('admin#reportPurchase',array_merge(request()->all(),['groupBy'=>'monthly']))}}">Monthly</a></li>
+                                <li><a class="dropdown-item" href="{{route('admin#reportPurchase',array_merge(request()->all(),['groupBy'=>'yearly']))}}">Yearly</a></li>
                             </ul>
                         </div>
                     </div>
@@ -122,14 +131,14 @@
                     <tr class="text-end">
                         <th>Product Name</th>
                         <th>Qty</th>
-                        <th>Total Price({{$currency}})</th>
+                        <th>Total Price({{request('currency')??'MMK'}})</th>
                     </tr>
                 </thead>
                 <tbody class="py-4">
                     @foreach ($product as $item)
                         <tr>
-                            <td>{{$item['product_name']}}</td>
-                            <td>{{number_format($item['total_qty'])}}</td>
+                            <td>{{$item['name']}}</td>
+                            <td>{{number_format($item['qty'])}}</td>
                             <td>{{number_format($item['total_price'])}}</td>
                         </tr>
                     @endforeach
@@ -141,16 +150,16 @@
             <table class="salesTable">
                 <thead>
                     <tr class="text-end">
-                        <th>Seller Name</th>
+                        <th>Supplier Name</th>
                         <th>Qty</th>
-                        <th>Total Price({{$currency}})</th>
+                        <th>Total Price({{request('currency')??'MMK'}})</th>
                     </tr>
                 </thead>
                 <tbody class="py-4">
                     @foreach ($supplier as $item)
                         <tr>
-                            <td>{{$item['supplier_name']}}</td>
-                            <td>{{number_format($item['total_qty'])}}</td>
+                            <td>{{$item['name']}}</td>
+                            <td>{{number_format($item['qty'])}}</td>
                             <td>{{number_format($item['total_price'])}}</td>
                         </tr>
                     @endforeach
@@ -235,10 +244,10 @@
     }
 
     function initializeCharts() {
-        $sellersGraph=@json($dateData);
+        $purchase=@json($purchaseGraph);
 
         const ctx = document.getElementById('purchaseGraph').getContext('2d');
-        charts['purchaseGraph'] = new Chart(ctx, chartConfig(chartType, $sellersGraph.date, $sellersGraph.total_price, 'Purchase'));
+        charts['purchaseGraph'] = new Chart(ctx, chartConfig(chartType, $purchase.date, $purchase.total_price, 'Purchase'));
     }
 
     // Initial chart load

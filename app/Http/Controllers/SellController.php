@@ -68,6 +68,7 @@ class SellController extends Controller
                 $order->pay_left=$req->payleft;
                 $order->subtotal=$order->total_price-$req->promotion_price+$req->tax_price;
                 $order->pay_amount+=$req->pay_amount;
+                $order->seller_name=Auth::user()->name;
             if ($payleft<=0) {
                 $table=Table::where('name',$order->table)->first();
                 $table->status=0;

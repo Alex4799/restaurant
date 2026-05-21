@@ -38,6 +38,8 @@ Route::prefix('admin')->group(function () {
         Route::get('product',[ReportController::class,'product'])->name('admin#reportProduct');
         Route::get('category',[ReportController::class,'category'])->name('admin#reportCategory');
         Route::get('seller',[ReportController::class,'seller'])->name('admin#reportSeller');
+        Route::get('purchase',[ReportController::class,'purchase'])->name('admin#reportPurchase');
+        Route::get('transfer',[ReportController::class,'transfer'])->name('admin#reportTransfer');
     });
 
     Route::prefix('profile')->group(function () {

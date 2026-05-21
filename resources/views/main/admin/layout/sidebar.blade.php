@@ -21,13 +21,10 @@
                     <a href="{{route('admin#reportSeller')}}" class="nav-link">Seller</a>
                 </li>
                 <li>
-                    <a href="#" class="nav-link">Customer</a>
+                    <a href="{{route('admin#reportPurchase')}}" class="nav-link">Purchase</a>
                 </li>
                 <li>
-                    <a href="#" class="nav-link">Purchase</a>
-                </li>
-                <li>
-                    <a href="#" class="nav-link">Inventory</a>
+                    <a href="{{route('admin#reportTransfer')}}" class="nav-link">Inventory</a>
                 </li>
             </ul>
         </li>

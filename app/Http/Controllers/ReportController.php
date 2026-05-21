@@ -5,7 +5,11 @@ namespace App\Http\Controllers;
 use App\Models\Currency;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\Purchase;
+use App\Models\PurchaseItem;
 use App\Models\Shop;
+use App\Models\Store;
+use App\Models\Transfer;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -182,12 +186,12 @@ public function category(){
 }
 
 public function seller(){
-    // filter data 
+    // filter data
 
         $filterData=$this->filterData();
 
     // variable
-    
+
         $selectQuery=match ($filterData['groupBy']) {
             'weekly'=>"WEEK(orders.created_at) as week,YEAR(orders.created_at) as year",
             'monthly'=>"MONTH(orders.created_at) as month,YEAR(orders.created_at) as year",
@@ -200,44 +204,173 @@ public function seller(){
     // base query
 
         $order=Order::where('currency',$filterData['currency'])
-                    // ->whereBetween('created_at',[$filterData['startDate'],$filterData['endDate']])
+                    ->whereBetween('created_at',[$filterData['startDate'],$filterData['endDate']])
                     ->when(request('shopFilter'),function($query){
                         $query->where('orders.shop_name',request('shopFilter'));
-                    })->when(request('seller'),function($query){
-                        $query->where('orders.seller_name',request('seller'));
-                    });
-    
+                    })->where('orders.status',1);
+
     // each order item filter
-    
-    $sellers=(clone $order)
-                    ->selectRaw("seller_name,SUM(total_price) as total_price,
-                    SUM(subtotal) as subtotal,SUM(profit) as profit, SUM(promotion_price) as promotion_price,SUM(tax_price) as tax_price")
-                    ->groupBy('seller_name')
-                    ->get();
 
-    $sellerName=request('seller')??$sellers->first()?->seller_name??null;
+        $sellers=(clone $order)
+                        ->selectRaw("seller_name,SUM(total_price) as total_price,
+                        SUM(subtotal) as subtotal,SUM(profit) as profit, SUM(promotion_price) as promotion_price,SUM(tax_price) as tax_price")
+                        ->groupBy('seller_name')
+                        ->get();
 
-    $sellerFilter=(clone $order)
-                            ->where('seller_name',$sellerName)
-                            ->selectRaw("$selectQuery,SUM(total_price) as total_price")
-                            ->groupBy($groupByQuery)
-                            ->get();
+        $sellerName=request('seller')??$sellers->first()?->seller_name??null;
 
-    $sellerFilterGraph=[
-        'date'=>[],
-        'total_price'=>$sellers->pluck('total_price'),
-        'seller_name'=>$sellerName,
-    ];
+        $sellerFilter=(clone $order)
+                                ->where('seller_name',$sellerName)
+                                ->selectRaw("$selectQuery,SUM(total_price) as total_price")
+                                ->groupBy($groupByQuery)
+                                ->get();
 
-    foreach ($sellerFilter as $item) {
-        $date=$this->formatDateData($filterData['groupBy'],$item);
-        array_push($sellersFilterGraph['date'],$date);
-    }
+        $sellerFilterGraph=[
+            'date'=>[],
+            'total_price'=>$sellerFilter->pluck('total_price')->toArray(),
+            'seller_name'=>$sellerName??'Other',
+        ];
 
-    dd($sellerFilter);
+        foreach ($sellerFilter as $item) {
+            $date=$this->formatDateData($filterData['groupBy'],$item);
+            array_push($sellerFilterGraph['date'],$date);
+        }
+
+        $sellerGraph=[
+            'seller_name'=>$sellers->pluck('seller_name')??'Other'->toArray(),
+            'total_price'=>$sellers->pluck('total_price')->toArray(),
+        ];
+
+    return view('main.admin.report.seller',compact('filterData','sellers','sellerFilterGraph','sellerGraph'));
 }
 
-// private function 
+public function purchase(){
+    //filter data
+        $filterData=$this->filterData();
+
+    //variable
+        $selectQuery=match ($filterData['groupBy']) {
+            'weekly'=>"WEEK(purchases.created_at) as week,YEAR(purchases.created_at) as year",
+            'monthly'=>"MONTH(purchases.created_at) as month,YEAR(purchases.created_at) as year",
+            'yearly'=>"YEAR(purchases.created_at) as year",
+            default=>"DATE(purchases.created_at) as date",
+        };
+
+        $groupByQuery=$this->groupByQuery($filterData['groupBy']);
+
+        //all product purchase
+        $purchase=Purchase::selectRaw("$selectQuery,SUM(total_price) as total_price")
+                        ->whereBetween('purchases.created_at',[$filterData['startDate'],$filterData['endDate']])
+                        ->when(request('shopFilter'),function($query){
+                            $query->where('purchases.shop_name',request('shopFilter'));
+                        })->where('purchases.status',1)
+                        ->groupBy($groupByQuery)
+                        ->get();
+
+        $purchaseGraph=[
+            'date'=>[],
+            'total_price'=>$purchase->pluck('total_price')->toArray(),
+        ];
+
+        foreach ($purchase as $item) {
+            $date=$this->formatDateData($filterData['groupBy'],$item);
+            array_push($purchaseGraph['date'],$date);
+        }
+
+        $purchaseItem=PurchaseItem::leftJoin('purchases','purchase_items.purchase_id','purchases.id')
+                                ->whereBetween('purchases.created_at',[$filterData['startDate'],$filterData['endDate']])
+                                ->where('purchase_items.currency',$filterData['currency'])
+                                ->when(request('shopFilter'),function($query){
+                                    $query->where('purchases.shop_name',request('shopFilter'));
+                                })
+                                ->where('purchases.status',1);
+
+
+        $product=(clone $purchaseItem)
+                            ->selectRaw('SUM(purchase_items.qty) as qty,SUM(purchase_items.total_price) as total_price,products.name')
+                            ->leftJoin('products','purchase_items.product_id','products.id')
+                            ->groupBy('purchase_items.product_id')
+                            ->get();
+
+
+        $supplier=(clone $purchaseItem)
+                            ->selectRaw('suppliers.name,SUM(purchase_items.total_price) as total_price,SUM(purchase_items.qty) as qty')
+                            ->leftJoin('suppliers','purchases.supplier_id','suppliers.id')
+                            ->groupBy('purchases.supplier_id')
+                            ->get();
+
+        return view('main.admin.report.purchase',compact('filterData','purchaseGraph','product','supplier'));
+}
+
+public function transfer(){
+    //filter data
+
+        $filterData=$this->filterData();
+
+    //variable
+
+        $selectQuery=match ($filterData['groupBy']) {
+            'weekly'=>"WEEK(transfers.created_at) as week,YEAR(transfers.created_at) as year",
+            'monthly'=>"MONTH(transfers.created_at) as month,YEAR(transfers.created_at) as year",
+            'yearly'=>"YEAR(transfers.created_at) as year",
+            default=>"DATE(transfers.created_at) as date",
+        };
+
+        $groupByQuery=$this->groupByQuery($filterData['groupBy']);
+
+    //base query
+        $transfer=Transfer::where('transfers.status',1)
+                            ->whereBetween('transfers.created_at',[$filterData['startDate'],$filterData['endDate']])
+                            // ->when(request('shopFilter'),function($query){
+                            //     $query->where('shop_name',request('shopFilter'));
+                            // })
+                            ->where('currency',$filterData['currency']);
+
+    //shop data
+        $storeData=[];
+        $transferData=(clone $transfer)->get();
+        $store=Store::where('active',1)->get();
+
+        foreach ($store as $item) {
+            $storeIn=$transferData->where('receive_store_id',$item->id)->sum('total_price');
+            $storeOut=$transferData->where('send_store_id',$item->id)->sum('total_price');
+            $storeInAdditionalFees=$transferData->where('receive_store_id',$item->id)->sum('additional_fees');
+            $storeOutAdditionalFees=$transferData->where('send_store_id',$item->id)->sum('additional_fees');
+            $storeData[$item->id]=[
+                'store_id'=>$item->id,
+                'store_name'=>$item->name,
+                'storeIn'=>$storeIn,
+                'storeInAdditionalFees'=>$storeInAdditionalFees,
+                'storeOut'=>$storeOut,
+                'storeOutAdditionalFees'=>$storeOutAdditionalFees
+            ];
+        }
+
+        // dd($storeData);
+
+        $storeId=request('store')??$store->first()?->id??'';
+
+        $transferFilter=(clone $transfer)
+                        ->selectRaw("$selectQuery,
+                            SUM(CASE WHEN transfers.send_store_id = $storeId THEN transfers.total_price ELSE 0 END) as send_total_price,
+                            SUM(CASE WHEN transfers.send_store_id = $storeId THEN transfers.additional_fees ELSE 0 END) as send_additional_fees,
+                            SUM(CASE WHEN transfers.receive_store_id = $storeId THEN transfers.total_price ELSE 0 END) as receive_total_price,
+                            SUM(CASE WHEN transfers.receive_store_id = $storeId THEN transfers.additional_fees ELSE 0 END) as receive_additional_fees
+                        ")
+                        ->where(function($query) use ($storeId){
+                            $query->where('transfers.send_store_id',$storeId)
+                            ->orWhere('transfers.receive_store_id',$storeId);
+                        })
+                        ->groupBy($groupByQuery)
+                        ->get();
+
+        return view('main.admin.report.transfer',compact('filterData','storeId','storeData','transferFilter'));
+
+}
+
+
+
+// private function
 private function filterData (){
     $startDate = request('startDate')?Carbon::parse(request('startDate'))->startOfDay():Carbon::now('Asia/Yangon')->subDays(29)->startOfDay();
     $endDate = request('endDate')?Carbon::parse(request('endDate'))->endOfDay():Carbon::now('Asia/Yangon')->endOfDay();
@@ -287,7 +420,7 @@ private function orderItemBaseQuery($filterData){
                                 $query->where('orders.shop_name',request('shopFilter'));
                             })->when(request('seller'),function($query){
                                 $query->where('orders.seller_name',request('seller'));
-                            });
+                            })->where('orders.status',1);
 }
 
 private function formatDateData($groupBy,$item){
